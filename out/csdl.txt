@@ -1,0 +1,852 @@
+USE [TestDb2]
+GO
+/****** Object:  StoredProcedure [dbo].[GetRevenueDaily]    Script Date: 12/13/2019 1:11:08 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROC [dbo].[GetRevenueDaily]
+	                        @fromDate VARCHAR(10),
+	                        @toDate VARCHAR(10)
+                          AS
+                          BEGIN
+		                    select
+                            CAST(b.DateCreated AS DATE) as Date,
+                              sum(bd.Quantity*bd.Price) as Revenue
+                              from Bills b
+                              inner join dbo.BillDetails bd
+                              on b.Id = bd.BillId
+                              where b.DateCreated <= cast(@toDate as date) 
+				          AND b.DateCreated >= cast(@fromDate as date)
+                          group by Cast(b.DateCreated as DATE)
+                          END
+
+GO
+/****** Object:  StoredProcedure [dbo].[GetTopVisitProduct]    Script Date: 12/13/2019 1:11:08 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROC [dbo].[GetTopVisitProduct]
+                          AS
+                          BEGIN
+	                        select top 10 p.Name as label, p.ViewCount as data
+	                        from Products p
+	                        order by p.ViewCount DESC
+                          END
+
+GO
+/****** Object:  StoredProcedure [dbo].[GetTotalNewOrder]    Script Date: 12/13/2019 1:11:08 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROC [dbo].[GetTotalNewOrder]
+	                        @fromDate VARCHAR(10),
+	                        @toDate VARCHAR(10)
+                          AS
+                          BEGIN
+		                  SELECT
+                          CAST(b.DateCreated AS DATE) as Date,
+                          COUNT(*) as TotalNewOrder
+                          FROM Bills b
+	                      where b.DateCreated >= cast(@fromDate as date) and b.DateCreated <= cast(@toDate as date)
+                          GROUP BY
+                          CAST(b.DateCreated AS DATE)
+                          END
+
+GO
+/****** Object:  StoredProcedure [dbo].[GetTotalNewUser]    Script Date: 12/13/2019 1:11:08 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE PROC [dbo].[GetTotalNewUser]
+                            @fromDate VARCHAR(10),
+	                        @toDate VARCHAR(10)
+                          AS
+                          BEGIN
+		                  SELECT
+                          CAST(us.DateCreated AS DATE) as Date,
+                          COUNT(*) as TotalNewUser
+                          FROM AppUsers us
+	                      where us.DateCreated >= cast(@fromDate as date) and us.DateCreated <= cast(@toDate as date)
+                          GROUP BY
+                          CAST(us.DateCreated AS DATE)
+                          END
+
+GO
+/****** Object:  Table [dbo].[AnnouncementBills]    Script Date: 12/13/2019 1:11:08 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[AnnouncementBills](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[AnnouncementId] [nvarchar](450) NOT NULL,
+	[HasRead] [bit] NULL,
+ CONSTRAINT [PK_AnnouncementBills] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Announcements]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Announcements](
+	[Id] [nvarchar](450) NOT NULL,
+	[Title] [nvarchar](250) NOT NULL,
+	[Content] [nvarchar](250) NULL,
+	[BillId] [int] NULL,
+	[DateCreated] [datetime2](7) NOT NULL,
+	[DateModified] [datetime2](7) NOT NULL,
+	[Status] [int] NOT NULL,
+ CONSTRAINT [PK_Announcements] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[AppRoleClaims]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[AppRoleClaims](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[RoleId] [uniqueidentifier] NOT NULL,
+	[ClaimType] [nvarchar](max) NULL,
+	[ClaimValue] [nvarchar](max) NULL,
+ CONSTRAINT [PK_AppRoleClaims] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[AppRoles]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[AppRoles](
+	[Id] [uniqueidentifier] NOT NULL,
+	[Name] [nvarchar](max) NULL,
+	[NormalizedName] [nvarchar](max) NULL,
+	[ConcurrencyStamp] [nvarchar](max) NULL,
+	[Description] [nvarchar](250) NULL,
+ CONSTRAINT [PK_AppRoles] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[AppUserClaims]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[AppUserClaims](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[UserId] [uniqueidentifier] NOT NULL,
+	[ClaimType] [nvarchar](max) NULL,
+	[ClaimValue] [nvarchar](max) NULL,
+ CONSTRAINT [PK_AppUserClaims] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[AppUserLogins]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[AppUserLogins](
+	[LoginProvider] [nvarchar](max) NULL,
+	[ProviderKey] [nvarchar](max) NULL,
+	[ProviderDisplayName] [nvarchar](max) NULL,
+	[UserId] [uniqueidentifier] NOT NULL,
+ CONSTRAINT [PK_AppUserLogins] PRIMARY KEY CLUSTERED 
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[AppUserRoles]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[AppUserRoles](
+	[UserId] [uniqueidentifier] NOT NULL,
+	[RoleId] [uniqueidentifier] NOT NULL,
+ CONSTRAINT [PK_AppUserRoles] PRIMARY KEY CLUSTERED 
+(
+	[RoleId] ASC,
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[AppUsers]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[AppUsers](
+	[Id] [uniqueidentifier] NOT NULL,
+	[UserName] [nvarchar](max) NULL,
+	[NormalizedUserName] [nvarchar](max) NULL,
+	[Email] [nvarchar](max) NULL,
+	[NormalizedEmail] [nvarchar](max) NULL,
+	[EmailConfirmed] [bit] NOT NULL,
+	[PasswordHash] [nvarchar](max) NULL,
+	[SecurityStamp] [nvarchar](max) NULL,
+	[ConcurrencyStamp] [nvarchar](max) NULL,
+	[PhoneNumber] [nvarchar](max) NULL,
+	[PhoneNumberConfirmed] [bit] NOT NULL,
+	[TwoFactorEnabled] [bit] NOT NULL,
+	[LockoutEnd] [datetimeoffset](7) NULL,
+	[LockoutEnabled] [bit] NOT NULL,
+	[AccessFailedCount] [int] NOT NULL,
+	[FullName] [nvarchar](max) NULL,
+	[Address] [nvarchar](max) NULL,
+	[BirthDay] [datetime2](7) NULL,
+	[Balance] [decimal](18, 2) NOT NULL,
+	[Avatar] [nvarchar](max) NULL,
+	[Province] [nvarchar](max) NULL,
+	[DistrictID] [int] NULL,
+	[WardCode] [nvarchar](max) NULL,
+	[DateCreated] [datetime2](7) NOT NULL,
+	[DateModified] [datetime2](7) NOT NULL,
+	[Status] [int] NOT NULL,
+ CONSTRAINT [PK_AppUsers] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[AppUserTokens]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[AppUserTokens](
+	[UserId] [uniqueidentifier] NOT NULL,
+	[LoginProvider] [nvarchar](max) NULL,
+	[Name] [nvarchar](max) NULL,
+	[Value] [nvarchar](max) NULL,
+ CONSTRAINT [PK_AppUserTokens] PRIMARY KEY CLUSTERED 
+(
+	[UserId] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Authors]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Authors](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[AuthorName] [nvarchar](max) NULL,
+	[SortOrder] [int] NOT NULL,
+	[ParentId] [int] NULL,
+	[Status] [int] NOT NULL,
+ CONSTRAINT [PK_Authors] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[BillDetails]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[BillDetails](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[BillId] [int] NOT NULL,
+	[ProductId] [int] NOT NULL,
+	[Quantity] [int] NOT NULL,
+	[Price] [decimal](18, 2) NOT NULL,
+ CONSTRAINT [PK_BillDetails] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Bills]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Bills](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[CustomerName] [nvarchar](256) NOT NULL,
+	[CustomerAddress] [nvarchar](256) NOT NULL,
+	[ServiceID] [int] NULL,
+	[Province] [nvarchar](max) NULL,
+	[DistrictID] [int] NULL,
+	[WardCode] [nvarchar](max) NULL,
+	[CODAmount] [int] NULL,
+	[CustomerMobile] [nvarchar](50) NOT NULL,
+	[CustomerMessage] [nvarchar](256) NULL,
+	[PaymentMethod] [int] NOT NULL,
+	[BillStatus] [int] NOT NULL,
+	[DateCreated] [datetime2](7) NOT NULL,
+	[DateModified] [datetime2](7) NOT NULL,
+	[Status] [int] NOT NULL,
+	[CustomerId] [uniqueidentifier] NULL,
+ CONSTRAINT [PK_Bills] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[ContactDetails]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[ContactDetails](
+	[Id] [nvarchar](255) NOT NULL,
+	[Name] [nvarchar](250) NOT NULL,
+	[Phone] [nvarchar](50) NULL,
+	[Email] [nvarchar](250) NULL,
+	[Website] [nvarchar](250) NULL,
+	[Address] [nvarchar](250) NULL,
+	[Other] [nvarchar](max) NULL,
+	[Lat] [float] NULL,
+	[Lng] [float] NULL,
+	[Status] [int] NOT NULL,
+ CONSTRAINT [PK_ContactDetails] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Feedbacks]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Feedbacks](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [nvarchar](250) NULL,
+	[Email] [nvarchar](250) NOT NULL,
+	[Message] [nvarchar](500) NOT NULL,
+	[Status] [int] NOT NULL,
+	[DateCreated] [datetime2](7) NOT NULL,
+	[DateModified] [datetime2](7) NOT NULL,
+ CONSTRAINT [PK_Feedbacks] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Functions]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Functions](
+	[Id] [nvarchar](450) NOT NULL,
+	[Name] [nvarchar](128) NOT NULL,
+	[URL] [nvarchar](250) NOT NULL,
+	[ParentId] [nvarchar](128) NULL,
+	[IconCss] [nvarchar](max) NULL,
+	[SortOrder] [int] NOT NULL,
+	[Status] [int] NOT NULL,
+ CONSTRAINT [PK_Functions] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Languages]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Languages](
+	[Id] [nvarchar](450) NOT NULL,
+	[Name] [nvarchar](128) NOT NULL,
+	[IsDefault] [bit] NOT NULL,
+	[Resources] [nvarchar](max) NULL,
+	[Status] [int] NOT NULL,
+ CONSTRAINT [PK_Languages] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Loggings]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Loggings](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[ActionDate] [datetime2](7) NOT NULL,
+	[Message] [nvarchar](max) NULL,
+	[ActionType] [nvarchar](max) NULL,
+ CONSTRAINT [PK_Loggings] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Permissions]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Permissions](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[RoleId] [uniqueidentifier] NOT NULL,
+	[FunctionId] [nvarchar](450) NOT NULL,
+	[CanCreate] [bit] NOT NULL,
+	[CanRead] [bit] NOT NULL,
+	[CanUpdate] [bit] NOT NULL,
+	[CanDelete] [bit] NOT NULL,
+ CONSTRAINT [PK_Permissions] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[ProductCategories]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[ProductCategories](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [nvarchar](max) NULL,
+	[Description] [nvarchar](max) NULL,
+	[ParentId] [int] NULL,
+	[HomeOrder] [int] NULL,
+	[Image] [nvarchar](max) NULL,
+	[HomeFlag] [bit] NULL,
+	[DateCreated] [datetime2](7) NOT NULL,
+	[DateModified] [datetime2](7) NOT NULL,
+	[SortOrder] [int] NOT NULL,
+	[Status] [int] NOT NULL,
+	[SeoPageTitle] [nvarchar](max) NULL,
+	[SeoAlias] [nvarchar](max) NULL,
+	[SeoKeywords] [nvarchar](max) NULL,
+	[SeoDescription] [nvarchar](max) NULL,
+ CONSTRAINT [PK_ProductCategories] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[ProductImages]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[ProductImages](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[ProductId] [int] NOT NULL,
+	[Path] [nvarchar](250) NULL,
+	[Caption] [nvarchar](250) NULL,
+ CONSTRAINT [PK_ProductImages] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Products]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Products](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Name] [nvarchar](255) NOT NULL,
+	[CategoryId] [int] NOT NULL,
+	[AuthorId] [int] NOT NULL,
+	[PublisherId] [int] NOT NULL,
+	[Image] [nvarchar](255) NULL,
+	[Price] [decimal](18, 2) NOT NULL,
+	[PromotionPrice] [decimal](18, 2) NULL,
+	[Description] [nvarchar](max) NULL,
+	[Content] [nvarchar](max) NULL,
+	[HomeFlag] [bit] NULL,
+	[HotFlag] [bit] NULL,
+	[ViewCount] [int] NOT NULL,
+	[Votes] [nvarchar](max) NULL,
+	[SeoAlias] [nvarchar](255) NULL,
+	[DateCreated] [datetime2](7) NOT NULL,
+	[DateModified] [datetime2](7) NOT NULL,
+	[Status] [int] NOT NULL,
+ CONSTRAINT [PK_Products] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[PromotionDetails]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[PromotionDetails](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[PromotionId] [int] NOT NULL,
+	[ProductId] [int] NOT NULL,
+	[PromotionPercent] [int] NOT NULL,
+	[Price] [decimal](18, 2) NOT NULL,
+ CONSTRAINT [PK_PromotionDetails] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Promotions]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Promotions](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[DateCreated] [datetime2](7) NOT NULL,
+	[DateEnd] [datetime2](7) NOT NULL,
+	[DateModified] [datetime2](7) NOT NULL,
+	[DateStart] [datetime2](7) NOT NULL,
+	[PromotionName] [nvarchar](max) NOT NULL,
+	[Status] [int] NOT NULL,
+ CONSTRAINT [PK_Promotions] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Publishers]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Publishers](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[NamePublisher] [nvarchar](max) NULL,
+	[ParentId] [int] NULL,
+	[SortOrder] [int] NOT NULL,
+	[Status] [int] NOT NULL,
+ CONSTRAINT [PK_Publishers] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Slides]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Slides](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[Image] [nvarchar](250) NOT NULL,
+	[Status] [int] NOT NULL,
+ CONSTRAINT [PK_Slides] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+/****** Object:  Table [dbo].[Votes]    Script Date: 12/13/2019 1:11:09 PM ******/
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[Votes](
+	[Id] [int] IDENTITY(1,1) NOT NULL,
+	[VoteForId] [int] NOT NULL,
+	[UserName] [nvarchar](max) NULL,
+	[Vote] [real] NOT NULL,
+ CONSTRAINT [PK_Votes] PRIMARY KEY CLUSTERED 
+(
+	[Id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET IDENTITY_INSERT [dbo].[AnnouncementBills] ON 
+
+GO
+INSERT [dbo].[AnnouncementBills] ([Id], [AnnouncementId], [HasRead]) VALUES (1, N'ae7bffad-a722-4066-90cf-6deab4e6ba07', 0)
+GO
+INSERT [dbo].[AnnouncementBills] ([Id], [AnnouncementId], [HasRead]) VALUES (2, N'ebc8d78e-26c4-4bf6-9a68-42163e083aff', 0)
+GO
+SET IDENTITY_INSERT [dbo].[AnnouncementBills] OFF
+GO
+INSERT [dbo].[Announcements] ([Id], [Title], [Content], [BillId], [DateCreated], [DateModified], [Status]) VALUES (N'ae7bffad-a722-4066-90cf-6deab4e6ba07', N'New bill', N'New bill from Trương Hồng Ngọc', NULL, CAST(0x0749B7510B5B6F400B AS DateTime2), CAST(0x070000000000000000 AS DateTime2), 1)
+GO
+INSERT [dbo].[Announcements] ([Id], [Title], [Content], [BillId], [DateCreated], [DateModified], [Status]) VALUES (N'ebc8d78e-26c4-4bf6-9a68-42163e083aff', N'New bill', N'New bill from Trương Hồng Ngọc', NULL, CAST(0x077DB5F35E5F6F400B AS DateTime2), CAST(0x070000000000000000 AS DateTime2), 1)
+GO
+INSERT [dbo].[AppRoles] ([Id], [Name], [NormalizedName], [ConcurrencyStamp], [Description]) VALUES (N'b97194e5-1644-44cc-5bb1-08d774702f57', N'Admin', N'ADMIN', N'5cad9d67-11fc-49e8-b655-54c62b61d169', N'Top manager')
+GO
+INSERT [dbo].[AppRoles] ([Id], [Name], [NormalizedName], [ConcurrencyStamp], [Description]) VALUES (N'b2997595-390b-4c44-5bb2-08d774702f57', N'Staff', N'STAFF', N'07bfd66f-5430-437f-a4f1-546e92ded404', N'Staff')
+GO
+INSERT [dbo].[AppRoles] ([Id], [Name], [NormalizedName], [ConcurrencyStamp], [Description]) VALUES (N'd58cc3e1-261b-49a5-5bb3-08d774702f57', N'Customer', N'CUSTOMER', N'af1af1a8-d8b2-4759-8cbf-175a621672e4', N'Customer')
+GO
+INSERT [dbo].[AppUserRoles] ([UserId], [RoleId]) VALUES (N'd272ca2d-d784-428e-5b11-08d774702f86', N'b97194e5-1644-44cc-5bb1-08d774702f57')
+GO
+INSERT [dbo].[AppUsers] ([Id], [UserName], [NormalizedUserName], [Email], [NormalizedEmail], [EmailConfirmed], [PasswordHash], [SecurityStamp], [ConcurrencyStamp], [PhoneNumber], [PhoneNumberConfirmed], [TwoFactorEnabled], [LockoutEnd], [LockoutEnabled], [AccessFailedCount], [FullName], [Address], [BirthDay], [Balance], [Avatar], [Province], [DistrictID], [WardCode], [DateCreated], [DateModified], [Status]) VALUES (N'd272ca2d-d784-428e-5b11-08d774702f86', N'admin', N'ADMIN', N'admin@gmail.com', N'ADMIN@GMAIL.COM', 1, N'AQAAAAEAACcQAAAAEHqt6vsyv+iVRREf/hE/dkgULdwaAgwh/Q7/D23QfUz2pY93570bTum9f4iYqSFXPQ==', N'MRGEJC45US6LU3ADVWO6YWSH6G6INXF7', N'a94ebec8-2a90-4378-ac37-02c3936710f0', NULL, 0, 0, NULL, 1, 0, N'Administrator', NULL, NULL, CAST(0.00 AS Decimal(18, 2)), N'/admin-side/assets/images/users/1.jpg', NULL, NULL, NULL, CAST(0x073A7CF2C74B6F400B AS DateTime2), CAST(0x073596F2C74B6F400B AS DateTime2), 1)
+GO
+SET IDENTITY_INSERT [dbo].[Authors] ON 
+
+GO
+INSERT [dbo].[Authors] ([Id], [AuthorName], [SortOrder], [ParentId], [Status]) VALUES (1, N'Jack Fogg', 1, NULL, 1)
+GO
+INSERT [dbo].[Authors] ([Id], [AuthorName], [SortOrder], [ParentId], [Status]) VALUES (2, N'Nguyễn Du', 3, NULL, 1)
+GO
+INSERT [dbo].[Authors] ([Id], [AuthorName], [SortOrder], [ParentId], [Status]) VALUES (3, N'Trần Đăng Khoa', 2, NULL, 1)
+GO
+INSERT [dbo].[Authors] ([Id], [AuthorName], [SortOrder], [ParentId], [Status]) VALUES (4, N'Nguyễn Đình Thi', 1, NULL, 1)
+GO
+SET IDENTITY_INSERT [dbo].[Authors] OFF
+GO
+SET IDENTITY_INSERT [dbo].[BillDetails] ON 
+
+GO
+INSERT [dbo].[BillDetails] ([Id], [BillId], [ProductId], [Quantity], [Price]) VALUES (1, 1, 4, 5, CAST(329000.00 AS Decimal(18, 2)))
+GO
+INSERT [dbo].[BillDetails] ([Id], [BillId], [ProductId], [Quantity], [Price]) VALUES (2, 2, 3, 16, CAST(78000.00 AS Decimal(18, 2)))
+GO
+INSERT [dbo].[BillDetails] ([Id], [BillId], [ProductId], [Quantity], [Price]) VALUES (3, 2, 2, 1, CAST(98000.00 AS Decimal(18, 2)))
+GO
+SET IDENTITY_INSERT [dbo].[BillDetails] OFF
+GO
+SET IDENTITY_INSERT [dbo].[Bills] ON 
+
+GO
+INSERT [dbo].[Bills] ([Id], [CustomerName], [CustomerAddress], [ServiceID], [Province], [DistrictID], [WardCode], [CODAmount], [CustomerMobile], [CustomerMessage], [PaymentMethod], [BillStatus], [DateCreated], [DateModified], [Status], [CustomerId]) VALUES (1, N'Trương Hồng Ngọc', N'150 KP3', 53320, N'Hồ Chí Minh', 1454, N'21208', 1676900, N'0904285240', N'Bom hàng nha', 0, 0, CAST(0x072EAC6E0B5B6F400B AS DateTime2), CAST(0x073672858E5E6F400B AS DateTime2), 1, N'd272ca2d-d784-428e-5b11-08d774702f86')
+GO
+INSERT [dbo].[Bills] ([Id], [CustomerName], [CustomerAddress], [ServiceID], [Province], [DistrictID], [WardCode], [CODAmount], [CustomerMobile], [CustomerMessage], [PaymentMethod], [BillStatus], [DateCreated], [DateModified], [Status], [CustomerId]) VALUES (2, N'Trương Hồng Ngọc', N'409 CMT8, Q10', 53321, N'An Giang', 1750, N'511101', 994660, N'01597456231', NULL, 0, 4, CAST(0x07ECD1FC5E5F6F400B AS DateTime2), CAST(0x0785610AA45F6F400B AS DateTime2), 1, N'd272ca2d-d784-428e-5b11-08d774702f86')
+GO
+SET IDENTITY_INSERT [dbo].[Bills] OFF
+GO
+INSERT [dbo].[ContactDetails] ([Id], [Name], [Phone], [Email], [Website], [Address], [Other], [Lat], [Lng], [Status]) VALUES (N'default', N'Coza', N'0904285240', N'ntnq1910@gmail.com', N'', N'155 Sư Vạn Hạnh, Phường 12, Quận 10, TP. Hồ Chí Minh', NULL, 106.66752, 10.77592, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'AUTHOR', N'Tác giả', N'/admin/author/index', N'PRODUCT', N'fas fa-chevron-right', 4, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'BILL', N'Hóa đơn', N'/admin/bill/index', N'PRODUCT', N'fas fa-chevron-right', 3, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'DASBOARD', N'Dasbooard', N'/admin/home/index', N'HOME', N'fas fa-home', 1, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'HOME', N'Trang chủ', N'/', NULL, N'fas fa-chevron-right', 1, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'NOTIFICATION', N'Notification', N'/admin/sendnotification/index', N'UTILITY', N'fas fa-chevron-right', 2, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'PRODUCT', N'Sản phẩm', N'/', NULL, N'fas fa-columns', 2, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'PRODUCT_CATEGORY', N'Danh mục', N'/admin/productcategory/index', N'PRODUCT', N'fas fa-chevron-right', 1, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'PRODUCT_LIST', N'Sản phẩm', N'/admin/product/index', N'PRODUCT', N'fas fa-chevron-right', 2, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'PROMOTION', N'Ch. trình khuyến mãi', N'/admin/promotion/index', N'UTILITY', N'fas fa-chevron-right', 3, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'PUBLISHER', N'Nhà xuất bản', N'/admin/publisher/index', N'PRODUCT', N'fas fa-chevron-right', 5, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'ROLE', N'Nhóm', N'/admin/role/index', N'SYSTEM', N'fas fa-chevron-right', 1, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'SLIDE', N'Slide', N'/admin/slide/index', N'UTILITY', N'fas fa-chevron-right', 1, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'SYSTEM', N'Hệ thống', N'/', NULL, N'fas fa-cogs', 4, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'USER', N'Người dùng', N'/admin/user/index', N'SYSTEM', N'fas fa-chevron-right', 2, 1)
+GO
+INSERT [dbo].[Functions] ([Id], [Name], [URL], [ParentId], [IconCss], [SortOrder], [Status]) VALUES (N'UTILITY', N'Tiện ích', N'/', NULL, N'fas fa-clone', 3, 1)
+GO
+SET IDENTITY_INSERT [dbo].[Loggings] ON 
+
+GO
+INSERT [dbo].[Loggings] ([Id], [ActionDate], [Message], [ActionType]) VALUES (1, CAST(0x071FEE7AE34B6F400B AS DateTime2), N'admin', N'sign in')
+GO
+INSERT [dbo].[Loggings] ([Id], [ActionDate], [Message], [ActionType]) VALUES (2, CAST(0x0703954F885A6F400B AS DateTime2), N'admin', N'update product')
+GO
+INSERT [dbo].[Loggings] ([Id], [ActionDate], [Message], [ActionType]) VALUES (3, CAST(0x07C1E4DA8B5A6F400B AS DateTime2), N'admin', N'update product')
+GO
+INSERT [dbo].[Loggings] ([Id], [ActionDate], [Message], [ActionType]) VALUES (4, CAST(0x070414A78F5A6F400B AS DateTime2), N'admin', N'update product')
+GO
+INSERT [dbo].[Loggings] ([Id], [ActionDate], [Message], [ActionType]) VALUES (5, CAST(0x071B05B2945A6F400B AS DateTime2), N'admin', N'update product')
+GO
+INSERT [dbo].[Loggings] ([Id], [ActionDate], [Message], [ActionType]) VALUES (6, CAST(0x07FF4DF7685D6F400B AS DateTime2), N'admin', N'delete product')
+GO
+INSERT [dbo].[Loggings] ([Id], [ActionDate], [Message], [ActionType]) VALUES (7, CAST(0x07CD7853745D6F400B AS DateTime2), N'admin', N'delete product')
+GO
+INSERT [dbo].[Loggings] ([Id], [ActionDate], [Message], [ActionType]) VALUES (8, CAST(0x07540525895F6F400B AS DateTime2), N'admin', N'delete product')
+GO
+INSERT [dbo].[Loggings] ([Id], [ActionDate], [Message], [ActionType]) VALUES (9, CAST(0x0789E287BF606F400B AS DateTime2), N'admin', N'sign in')
+GO
+INSERT [dbo].[Loggings] ([Id], [ActionDate], [Message], [ActionType]) VALUES (10, CAST(0x07E4A17D00616F400B AS DateTime2), N'admin', N'delete product')
+GO
+SET IDENTITY_INSERT [dbo].[Loggings] OFF
+GO
+SET IDENTITY_INSERT [dbo].[ProductCategories] ON 
+
+GO
+INSERT [dbo].[ProductCategories] ([Id], [Name], [Description], [ParentId], [HomeOrder], [Image], [HomeFlag], [DateCreated], [DateModified], [SortOrder], [Status], [SeoPageTitle], [SeoAlias], [SeoKeywords], [SeoDescription]) VALUES (1, N'Kinh dị', NULL, NULL, NULL, NULL, NULL, CAST(0x070000000000000000 AS DateTime2), CAST(0x070000000000000000 AS DateTime2), 1, 1, NULL, N'kinh-di', NULL, NULL)
+GO
+INSERT [dbo].[ProductCategories] ([Id], [Name], [Description], [ParentId], [HomeOrder], [Image], [HomeFlag], [DateCreated], [DateModified], [SortOrder], [Status], [SeoPageTitle], [SeoAlias], [SeoKeywords], [SeoDescription]) VALUES (2, N'Lãng mạng', NULL, NULL, NULL, NULL, NULL, CAST(0x070000000000000000 AS DateTime2), CAST(0x070000000000000000 AS DateTime2), 2, 1, NULL, N'lang-man', NULL, NULL)
+GO
+INSERT [dbo].[ProductCategories] ([Id], [Name], [Description], [ParentId], [HomeOrder], [Image], [HomeFlag], [DateCreated], [DateModified], [SortOrder], [Status], [SeoPageTitle], [SeoAlias], [SeoKeywords], [SeoDescription]) VALUES (3, N'Truyện tranh', NULL, NULL, NULL, NULL, NULL, CAST(0x070000000000000000 AS DateTime2), CAST(0x070000000000000000 AS DateTime2), 3, 1, NULL, N'truyen-tranh', NULL, NULL)
+GO
+INSERT [dbo].[ProductCategories] ([Id], [Name], [Description], [ParentId], [HomeOrder], [Image], [HomeFlag], [DateCreated], [DateModified], [SortOrder], [Status], [SeoPageTitle], [SeoAlias], [SeoKeywords], [SeoDescription]) VALUES (4, N'Kinh tế', NULL, NULL, NULL, NULL, NULL, CAST(0x070000000000000000 AS DateTime2), CAST(0x070000000000000000 AS DateTime2), 4, 1, NULL, N'kinh-te', NULL, NULL)
+GO
+SET IDENTITY_INSERT [dbo].[ProductCategories] OFF
+GO
+SET IDENTITY_INSERT [dbo].[Products] ON 
+
+GO
+INSERT [dbo].[Products] ([Id], [Name], [CategoryId], [AuthorId], [PublisherId], [Image], [Price], [PromotionPrice], [Description], [Content], [HomeFlag], [HotFlag], [ViewCount], [Votes], [SeoAlias], [DateCreated], [DateModified], [Status]) VALUES (1, N'Đối thoại với Thaksin', 1, 1, 1, N'/uploaded/images/20191129/doi_thoai_voi_thaksin.500x780.w.b.jpg', CAST(169000.00 AS Decimal(18, 2)), CAST(131820.00 AS Decimal(18, 2)), NULL, NULL, 0, 0, 0, NULL, N'Doi-thoai-voi-Thaksin', CAST(0x07C10650C84B6F400B AS DateTime2), CAST(0x07E8C051745D6F400B AS DateTime2), 0)
+GO
+INSERT [dbo].[Products] ([Id], [Name], [CategoryId], [AuthorId], [PublisherId], [Image], [Price], [PromotionPrice], [Description], [Content], [HomeFlag], [HotFlag], [ViewCount], [Votes], [SeoAlias], [DateCreated], [DateModified], [Status]) VALUES (2, N'Sống những ngày không hối tiếc', 2, 2, 1, N'/uploaded/images/20191129/songnhungngaykhonghoitiec.450x652.w.b.jpg', CAST(98000.00 AS Decimal(18, 2)), NULL, NULL, NULL, 0, 0, 1, NULL, N'Song-nhung-ngay-khong-hoi-tiec', CAST(0x07F80650C84B6F400B AS DateTime2), CAST(0x07C4037200616F400B AS DateTime2), 0)
+GO
+INSERT [dbo].[Products] ([Id], [Name], [CategoryId], [AuthorId], [PublisherId], [Image], [Price], [PromotionPrice], [Description], [Content], [HomeFlag], [HotFlag], [ViewCount], [Votes], [SeoAlias], [DateCreated], [DateModified], [Status]) VALUES (3, N'Đồng hành du học cùng con', 3, 3, 2, N'/uploaded/images/20191129/donghanhduhoccungcontb.jpg', CAST(78000.00 AS Decimal(18, 2)), CAST(52260.00 AS Decimal(18, 2)), NULL, NULL, 0, 0, 1, NULL, N'Dong-hanh-du-hoc-cung-con', CAST(0x07FD0650C84B6F400B AS DateTime2), CAST(0x07348222895F6F400B AS DateTime2), 0)
+GO
+INSERT [dbo].[Products] ([Id], [Name], [CategoryId], [AuthorId], [PublisherId], [Image], [Price], [PromotionPrice], [Description], [Content], [HomeFlag], [HotFlag], [ViewCount], [Votes], [SeoAlias], [DateCreated], [DateModified], [Status]) VALUES (4, N'Lưỡng giới', 4, 4, 2, N'/uploaded/images/20191129/luonggioibm.450x652.w.b.jpg', CAST(329000.00 AS Decimal(18, 2)), NULL, NULL, NULL, 0, 0, 1, NULL, N'Luong-gioi', CAST(0x07FF0650C84B6F400B AS DateTime2), CAST(0x07D2C6F0685D6F400B AS DateTime2), 0)
+GO
+SET IDENTITY_INSERT [dbo].[Products] OFF
+GO
+SET IDENTITY_INSERT [dbo].[PromotionDetails] ON 
+
+GO
+INSERT [dbo].[PromotionDetails] ([Id], [PromotionId], [ProductId], [PromotionPercent], [Price]) VALUES (3, 2, 1, 22, CAST(22.00 AS Decimal(18, 2)))
+GO
+INSERT [dbo].[PromotionDetails] ([Id], [PromotionId], [ProductId], [PromotionPercent], [Price]) VALUES (4, 2, 3, 33, CAST(33.00 AS Decimal(18, 2)))
+GO
+SET IDENTITY_INSERT [dbo].[PromotionDetails] OFF
+GO
+SET IDENTITY_INSERT [dbo].[Promotions] ON 
+
+GO
+INSERT [dbo].[Promotions] ([Id], [DateCreated], [DateEnd], [DateModified], [DateStart], [PromotionName], [Status]) VALUES (2, CAST(0x0728E46A784C6F400B AS DateTime2), CAST(0x0700E03495646F400B AS DateTime2), CAST(0x070000000000000000 AS DateTime2), CAST(0x07001B9059506F400B AS DateTime2), N'Flash sale', 1)
+GO
+SET IDENTITY_INSERT [dbo].[Promotions] OFF
+GO
+SET IDENTITY_INSERT [dbo].[Publishers] ON 
+
+GO
+INSERT [dbo].[Publishers] ([Id], [NamePublisher], [ParentId], [SortOrder], [Status]) VALUES (1, N'Kim Đồng', NULL, 1, 1)
+GO
+INSERT [dbo].[Publishers] ([Id], [NamePublisher], [ParentId], [SortOrder], [Status]) VALUES (2, N'NXB Trẻ', NULL, 2, 1)
+GO
+SET IDENTITY_INSERT [dbo].[Publishers] OFF
+GO
+SET IDENTITY_INSERT [dbo].[Slides] ON 
+
+GO
+INSERT [dbo].[Slides] ([Id], [Image], [Status]) VALUES (1, N'/uploaded/images/20191026/slide1.jpg', 1)
+GO
+INSERT [dbo].[Slides] ([Id], [Image], [Status]) VALUES (2, N'/uploaded/images/20191026/slide2.jpg', 1)
+GO
+SET IDENTITY_INSERT [dbo].[Slides] OFF
+GO
+ALTER TABLE [dbo].[AnnouncementBills]  WITH CHECK ADD  CONSTRAINT [FK_AnnouncementBills_Announcements_AnnouncementId] FOREIGN KEY([AnnouncementId])
+REFERENCES [dbo].[Announcements] ([Id])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[AnnouncementBills] CHECK CONSTRAINT [FK_AnnouncementBills_Announcements_AnnouncementId]
+GO
+ALTER TABLE [dbo].[Announcements]  WITH CHECK ADD  CONSTRAINT [FK_Announcements_Bills_BillId] FOREIGN KEY([BillId])
+REFERENCES [dbo].[Bills] ([Id])
+GO
+ALTER TABLE [dbo].[Announcements] CHECK CONSTRAINT [FK_Announcements_Bills_BillId]
+GO
+ALTER TABLE [dbo].[BillDetails]  WITH CHECK ADD  CONSTRAINT [FK_BillDetails_Bills_BillId] FOREIGN KEY([BillId])
+REFERENCES [dbo].[Bills] ([Id])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[BillDetails] CHECK CONSTRAINT [FK_BillDetails_Bills_BillId]
+GO
+ALTER TABLE [dbo].[BillDetails]  WITH CHECK ADD  CONSTRAINT [FK_BillDetails_Products_ProductId] FOREIGN KEY([ProductId])
+REFERENCES [dbo].[Products] ([Id])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[BillDetails] CHECK CONSTRAINT [FK_BillDetails_Products_ProductId]
+GO
+ALTER TABLE [dbo].[Bills]  WITH CHECK ADD  CONSTRAINT [FK_Bills_AppUsers_CustomerId] FOREIGN KEY([CustomerId])
+REFERENCES [dbo].[AppUsers] ([Id])
+GO
+ALTER TABLE [dbo].[Bills] CHECK CONSTRAINT [FK_Bills_AppUsers_CustomerId]
+GO
+ALTER TABLE [dbo].[Permissions]  WITH CHECK ADD  CONSTRAINT [FK_Permissions_AppRoles_RoleId] FOREIGN KEY([RoleId])
+REFERENCES [dbo].[AppRoles] ([Id])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[Permissions] CHECK CONSTRAINT [FK_Permissions_AppRoles_RoleId]
+GO
+ALTER TABLE [dbo].[Permissions]  WITH CHECK ADD  CONSTRAINT [FK_Permissions_Functions_FunctionId] FOREIGN KEY([FunctionId])
+REFERENCES [dbo].[Functions] ([Id])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[Permissions] CHECK CONSTRAINT [FK_Permissions_Functions_FunctionId]
+GO
+ALTER TABLE [dbo].[ProductImages]  WITH CHECK ADD  CONSTRAINT [FK_ProductImages_Products_ProductId] FOREIGN KEY([ProductId])
+REFERENCES [dbo].[Products] ([Id])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[ProductImages] CHECK CONSTRAINT [FK_ProductImages_Products_ProductId]
+GO
+ALTER TABLE [dbo].[Products]  WITH CHECK ADD  CONSTRAINT [FK_Products_Authors_AuthorId] FOREIGN KEY([AuthorId])
+REFERENCES [dbo].[Authors] ([Id])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[Products] CHECK CONSTRAINT [FK_Products_Authors_AuthorId]
+GO
+ALTER TABLE [dbo].[Products]  WITH CHECK ADD  CONSTRAINT [FK_Products_ProductCategories_CategoryId] FOREIGN KEY([CategoryId])
+REFERENCES [dbo].[ProductCategories] ([Id])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[Products] CHECK CONSTRAINT [FK_Products_ProductCategories_CategoryId]
+GO
+ALTER TABLE [dbo].[Products]  WITH CHECK ADD  CONSTRAINT [FK_Products_Publishers_PublisherId] FOREIGN KEY([PublisherId])
+REFERENCES [dbo].[Publishers] ([Id])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[Products] CHECK CONSTRAINT [FK_Products_Publishers_PublisherId]
+GO
+ALTER TABLE [dbo].[PromotionDetails]  WITH CHECK ADD  CONSTRAINT [FK_PromotionDetails_Products_ProductId] FOREIGN KEY([ProductId])
+REFERENCES [dbo].[Products] ([Id])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[PromotionDetails] CHECK CONSTRAINT [FK_PromotionDetails_Products_ProductId]
+GO
+ALTER TABLE [dbo].[PromotionDetails]  WITH CHECK ADD  CONSTRAINT [FK_PromotionDetails_Promotions_PromotionId] FOREIGN KEY([PromotionId])
+REFERENCES [dbo].[Promotions] ([Id])
+ON DELETE CASCADE
+GO
+ALTER TABLE [dbo].[PromotionDetails] CHECK CONSTRAINT [FK_PromotionDetails_Promotions_PromotionId]
+GO
