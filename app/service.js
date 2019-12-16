@@ -44,11 +44,11 @@ function saveFile(fileName, buf) {
   fs.writeFileSync(path.resolve(baseDir, fileName), buf)
 }
 async function detectAllLabeledFaces() {
-  const labels = ["Nancy", "Suzy", "Top"];
+  const labels = ["Nancy", "Suzy", "Top", "GD"];
   return Promise.all(
     labels.map(async label => {
       const descriptions = [];
-      for (let i = 1; i <= 5; i++) {
+      for (let i = 1; i <= 2; i++) {
         const img = await canvas.loadImage(
           `./images/${label}/${i}.jpg`
         );
@@ -63,7 +63,7 @@ async function detectAllLabeledFaces() {
   );
 }
 
-async function run() {
+async function run(imagePath) {
 
   // load weights
   await faceapi.nets.ssdMobilenetv1.loadFromDisk('weights')
@@ -71,29 +71,27 @@ async function run() {
   await faceapi.nets.faceLandmark68Net.loadFromDisk('weights')
 
   // load the image
-  const img = await canvas.loadImage('./images/testSuzy.jpg');
+  const img = await canvas.loadImage(imagePath);
 
   // Detect face
   const results = await faceapi
-    .detectSingleFace(img, faceDetectionOptions)
+    .detectAllFaces(img, faceDetectionOptions)
     .withFaceLandmarks()
-    .withFaceDescriptor();
+    .withFaceDescriptors();
 
   // Recognize Face
   const labeledFaceDescriptors = await detectAllLabeledFaces();
   const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, 0.5);
-
-  const bestMatch = faceMatcher.findBestMatch(results.descriptor);
-  return res = { faceAnnotations: results.detection, faceRecognitions: bestMatch.toString() };
-
-  // Save the new canvas as image
-  //saveFile('faceLandmarkDetection.jpg', out.toBuffer('image/jpeg'))
-  //console.log('done, saved results to out/faceLandmarkDetection.jpg')
+  var data = []
+  results.forEach(element => {
+    const bestMatch = faceMatcher.findBestMatch(element.descriptor);
+    data.push({ faceAnnotations: element.detection.box, faceRecognitions: bestMatch.toString() })
+  })
+  return data;
 }
 
 exports.detectAllFace = async (req, res) => {
-  const resp = await run()
-    .then(data => {
-      res.send(data)
-    })
+  const imagePath = `./images/${req.file.filename}`
+  await run(imagePath)
+    .then(data => { res.send(data) })
 };
