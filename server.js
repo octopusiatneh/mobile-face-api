@@ -13,8 +13,8 @@ app.use(express.static(path.join(__dirname, "images")));
 require("./app/route")(app);
 
 // listen for requests
-app.listen(4000, () => {
+app.listen(8080, () => {
   address((err, addrs) => {
-    console.log("listening on: http://" + addrs.ip + ":4000");
+    console.log("listening on: http://" + addrs.ip + ":8080");
   });
 });

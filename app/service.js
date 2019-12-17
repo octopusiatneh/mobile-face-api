@@ -77,7 +77,9 @@ async function run(imagePath) {
   const results = await faceapi
     .detectAllFaces(img, faceDetectionOptions)
     .withFaceLandmarks()
-    .withFaceDescriptors();
+    .withFaceDescriptors()
+    .withAgeAndGender()
+    .withFaceExpressions()
 
   // Recognize Face
   const labeledFaceDescriptors = await detectAllLabeledFaces();
@@ -85,7 +87,13 @@ async function run(imagePath) {
   var data = []
   results.forEach(element => {
     const bestMatch = faceMatcher.findBestMatch(element.descriptor);
-    data.push({ faceAnnotations: element.detection.box, faceRecognitions: bestMatch.toString() })
+    data.push({
+      faceAnnotations: element.detection.box,
+      faceRecognitions: bestMatch.toString(),
+      faceExpressions: element.expressions,
+      age: faceapi.round(element.age, 0),
+      gender: element.gender
+    })
   })
   return data;
 }
