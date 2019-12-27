@@ -44,11 +44,11 @@ function saveFile(fileName, buf) {
   fs.writeFileSync(path.resolve(baseDir, fileName), buf)
 }
 async function detectAllLabeledFaces() {
-  const labels = ["Nancy", "Suzy", "Top", "GD"];
+  const labels = ["Thieu Trong Thoai", "Vo Hoang Dat", "Truong Hong Ngoc"];
   return Promise.all(
     labels.map(async label => {
       const descriptions = [];
-      for (let i = 1; i <= 2; i++) {
+      for (let i = 1; i <= 1; i++) {
         const img = await canvas.loadImage(
           `./images/${label}/${i}.jpg`
         );
@@ -69,6 +69,8 @@ async function run(imagePath) {
   await faceapi.nets.ssdMobilenetv1.loadFromDisk('weights')
   await faceapi.nets.faceRecognitionNet.loadFromDisk('weights')
   await faceapi.nets.faceLandmark68Net.loadFromDisk('weights')
+  await faceapi.nets.ageGenderNet.loadFromDisk('weights')
+  await faceapi.nets.faceExpressionNet.loadFromDisk('weights')
 
   // load the image
   const img = await canvas.loadImage(imagePath);
@@ -88,9 +90,9 @@ async function run(imagePath) {
   results.forEach(element => {
     const bestMatch = faceMatcher.findBestMatch(element.descriptor);
     data.push({
-      faceAnnotations: element.detection.box,
-      faceRecognitions: bestMatch.toString(),
-      faceExpressions: element.expressions,
+      faceBox: element.detection.box,
+      faceRecognition: bestMatch.toString(),
+      faceExpression: element.expressions,
       age: faceapi.round(element.age, 0),
       gender: element.gender
     })
@@ -101,5 +103,9 @@ async function run(imagePath) {
 exports.detectAllFace = async (req, res) => {
   const imagePath = `./images/${req.file.filename}`
   await run(imagePath)
-    .then(data => { res.send(data) })
+    .then(data => {
+      res.send({
+        responses: [{ faceAnnotations: data }]
+      })
+    })
 };
